@@ -3,15 +3,12 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UsersModule } from '../users/users.module';
 import { SequelizeModule } from '@nestjs/sequelize';
-import { User } from 'src/users/users.model';
+import { User } from 'src/models/users.model';
 import { JwtModule } from '@nestjs/jwt';
+import { RefreshToken } from 'src/models/refresh-token.model';
 
 @Module({
-  imports: [
-    UsersModule,
-    SequelizeModule.forFeature([User]),
-    JwtModule.register({ global: true, secret: process.env.secretKey }),
-  ],
+  imports: [UsersModule, SequelizeModule.forFeature([User, RefreshToken])],
   providers: [AuthService],
   controllers: [AuthController],
 })

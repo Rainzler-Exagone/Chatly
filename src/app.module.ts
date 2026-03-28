@@ -28,15 +28,19 @@ import config from './config/config';
     GatewayModule,
     AuthModule,
     UsersModule,
-    SequelizeModule.forRoot({
-      dialect: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : undefined,
-      username: process.env.DB_USERNAME,
-      password: String(process.env.DB_PASSWORD),
-      database: process.env.DB_NAME,
-      autoLoadModels: true,
-      synchronize: true, // Note: Set to false in production
+    SequelizeModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        dialect: 'postgres',
+        host: configService.get('database.host'),
+        port: configService.get('database.port'),
+        username: configService.get('database.username'),
+        password: configService.get('database.password'),
+        database: configService.get('database.name'),
+        autoLoadModels: true,
+        synchronize: true, // Note: Set to false in production
+      }),
     }),
   ],
   controllers: [AppController],
