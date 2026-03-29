@@ -71,11 +71,12 @@ export class AuthService {
 
   async generateUserTokens(userId: any) {
     //access token
-    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1d' });
+    const accessToken = this.jwtService.sign({ userId }, { expiresIn: 15 });
 
     //refresh token
     const refreshToken = uuidv4();
     await this.saveRefreshToken(userId, refreshToken);
+
     return { accessToken, refreshToken, message: 'success' };
   }
 
