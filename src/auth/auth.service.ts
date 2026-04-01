@@ -52,13 +52,13 @@ export class AuthService {
   }
 
   async login(loginData: LoginDto) {
-    const { email, password } = loginData;
+    const { username, password } = loginData;
 
     const user = await this.userModel.findOne({
-      where: { email: email },
+      where: { name: username },
     });
     if (!user) {
-      throw new UnauthorizedException('Email doesn`t exist');
+      throw new UnauthorizedException('user doesn`t exist');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -71,7 +71,7 @@ export class AuthService {
 
   async generateUserTokens(userId: any) {
     //access token
-    const accessToken = this.jwtService.sign({ userId }, { expiresIn: 15 });
+    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
 
     //refresh token
     const refreshToken = uuidv4();
@@ -107,5 +107,16 @@ export class AuthService {
       throw new UnauthorizedException('Token has expired or doesn`t exist ');
     }
     return this.generateUserTokens(storedToken.userId);
+  }
+
+  async logout(refreshToken: string) {
+    const token = await this.refreshTokenModel.findOne({
+      where: { token: refreshToken },
+    });
+
+    if (token) {
+      await token.destroy();
+      return { message: 'Logged out successfully' };
+    }
   }
 }
