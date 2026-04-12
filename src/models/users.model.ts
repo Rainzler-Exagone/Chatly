@@ -3,13 +3,13 @@ import {
   Column,
   Model,
   DataType,
-  PrimaryKey,
-  AutoIncrement,
   CreatedAt,
   UpdatedAt,
+  PrimaryKey,
 } from 'sequelize-typescript';
 
 interface UserCreationAttributes {
+  // id: string;
   name: string;
   email: string;
   password: string;
@@ -19,6 +19,14 @@ interface UserCreationAttributes {
   tableName: 'users',
 })
 export class User extends Model<User, UserCreationAttributes> {
+  @PrimaryKey
+  @Column({
+    type: DataType.UUID,
+    allowNull: false,
+    unique: true,
+    defaultValue: DataType.UUIDV4,
+  })
+  declare id: string;
   @Column({
     type: DataType.STRING,
     allowNull: false,

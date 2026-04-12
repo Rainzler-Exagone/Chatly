@@ -3,6 +3,7 @@ import {
   DataType,
   ForeignKey,
   Model,
+  PrimaryKey,
   Table,
 } from 'sequelize-typescript';
 import { User } from './users.model';
@@ -19,6 +20,15 @@ export class RefreshToken extends Model<
   RefreshToken,
   RefreshTokenCreationAttributes
 > {
+  @PrimaryKey
+  @Column({
+    type: DataType.UUID,
+    defaultValue: DataType.UUIDV4,
+    allowNull: false,
+    primaryKey: true,
+    unique: true,
+  })
+  declare id: string;
   @Column({
     type: DataType.STRING,
     allowNull: false,
@@ -28,11 +38,11 @@ export class RefreshToken extends Model<
 
   @ForeignKey(() => User)
   @Column({
-    type: DataType.INTEGER,
+    type: DataType.UUID,
     allowNull: false,
     unique: true,
   })
-  declare userId: number;
+  declare userId: string;
 
   @Column({
     type: DataType.DATE,

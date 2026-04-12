@@ -14,7 +14,6 @@ import { InjectModel } from '@nestjs/sequelize';
 import { User } from 'src/models/users.model';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from 'src/Dtos/login.dto';
-import config from 'src/config/config';
 import { ConfigService } from '@nestjs/config';
 import { RefreshToken } from 'src/models/refresh-token.model';
 import { Op } from 'sequelize';
@@ -53,7 +52,7 @@ export class AuthService {
 
   async login(loginData: LoginDto) {
     const { username, password } = loginData;
-
+    console.log(username, password);
     const user = await this.userModel.findOne({
       where: { name: username },
     });

@@ -16,6 +16,8 @@ export class MyGateway implements OnModuleInit {
   @WebSocketServer()
   server: Server;
 
+  private users = new Map<string, string>();
+
   onModuleInit() {
     this.server.on('connection', (socket) => {
       console.log('Client connected:', socket.id);
