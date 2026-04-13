@@ -19,41 +19,16 @@ export class ChatService {
     private sequelize: Sequelize,
   ) {}
 
-  async findConversationBetweenUsers(userA: string, userB: string) {
-    const response = await this.ConversationParticipantModel.findOne({
-      attributes: ['conversationId'],
+  async findConversationBetweenUsers(senderId: string, receiverId: string) {
+    const directKey = [senderId, receiverId].sort().join(':');
+    console.log(directKey);
+    return await this.ConversationModel.findOne({
       where: {
-        userId: {
-          [Op.in]: [userA, userB],
-        },
+        directKey,
+        type: 'direct',
       },
-      group: ['conversationId'],
-      having: this.sequelize.literal('COUNT(DISTINCT "userId") = 2'),
-      raw: true,
     });
-    if (!response) return null;
-
-    return {
-      id: response.conversationId,
-    };
   }
-
-  // async fCindConversationBetweenUsers(userA: string, userB: string) {
-  //   const response = await this.ConversationParticipantModel.findOne({
-  //     attributes: ['conversationId'],
-  //     where: {
-  //       userId: [userA, userB],
-  //     },
-  //     group: ['conversationId'],
-  //     having: this.sequelize.literal('COUNT(DISTINCT "userId") = 2'),
-  //     raw: true,
-  //   });
-  //   if (!response) {
-  //     return null;
-  //   }
-
-  //   return response;
-  // }
 
   async sendMessage(
     senderId: string,
@@ -67,6 +42,7 @@ export class ChatService {
       senderId,
       receiverId,
     );
+    const directKey = [senderId, receiverId].sort().join(':');
 
     if (!conversation) {
       const receiver = await this.UserModel.findByPk(receiverId, {
@@ -78,6 +54,7 @@ export class ChatService {
           : receiver?.name || 'User';
 
       conversation = await this.ConversationModel.create({
+        directKey,
         type: 'direct',
         title,
         createdBy: senderId,
@@ -98,6 +75,48 @@ export class ChatService {
       messageType,
       senderId,
       content,
+    });
+  }
+
+  async getMessages(
+    senderId: string,
+    receiverId: string,
+    limit: number = 30,
+    before?: string,
+  ) {
+    const conversation = await this.findConversationBetweenUsers(
+      senderId,
+      receiverId,
+    );
+    if (!conversation) {
+      return { message: '!conv', senderId, receiverId };
+    }
+    const conversationId = conversation.id;
+    const where: any = {
+      conversationId,
+    };
+    if (before) {
+      where.createdAt = {
+        [Op.lt]: before,
+      };
+    }
+
+    const messages = await this.MessageModel.findAll({
+      where: { messageType: 'text' },
+      order: [['createdAt', 'DESC']],
+      limit,
+    });
+
+    return messages;
+  }
+
+  async getConversations(userId: string, limit: number = 20, before?: string) {
+
+      const where: any = {
+      userId,
+    };
+    const data = await this.ConversationModel.findAll({
+      where:
     });
   }
 }

@@ -49,4 +49,11 @@ export class Conversation extends Model<
     allowNull: false,
   })
   declare createdBy: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+    unique: true,
+  })
+  declare directKey: string;
 }

@@ -1,6 +1,6 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { conversationDto } from 'src/Dtos/conversation.dto';
-import { createMessageDto } from 'src/Dtos/message.dto';
+import { createMessageDto, getMessageDto } from 'src/Dtos/message.dto';
 import { ChatService } from './chat.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 
@@ -21,9 +21,21 @@ export class ChatController {
     );
   }
 
-  //   @Post('conversation')
-  //   async creatConversation(
-  //     @Body() ConversationDto: conversationDto,
-  //     @Req() req,
-  //   ) {}
+  @UseGuards(AuthGuard)
+  @Get('messages')
+  getMessages(@Body() messageDto: getMessageDto, @Req() req) {
+    const { receiverId, limit, before } = messageDto;
+    const senderId = req.userId;
+    console.log(senderId);
+    return this.chatService.getMessages(senderId, receiverId, limit, before);
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('conversations')
+  async creatConversation(
+    @Body() ConversationDto: conversationDto,
+    @Req() req,
+  ) {
+    return;
+  }
 }

@@ -4,6 +4,9 @@ import {
   IsOptional,
   IsEnum,
   MaxLength,
+  IsInt,
+  Min,
+  Max,
 } from 'class-validator';
 
 export enum MessageType {
@@ -24,4 +27,19 @@ export class createMessageDto {
   @IsOptional()
   @IsEnum(MessageType)
   declare messageType: MessageType;
+}
+
+export class getMessageDto {
+  @IsUUID()
+  declare receiverId: string;
+
+  @IsOptional()
+  @IsUUID()
+  before?;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 30;
 }
