@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { conversationDto } from 'src/Dtos/conversation.dto';
+import {
+  conversationDto,
+  GetConversationsDto,
+} from 'src/Dtos/conversation.dto';
 import { ConversationParticipant } from 'src/models/conversation-participant.model';
 import { Conversation } from 'src/models/conversation.model';
 import { Message } from 'src/models/message.model';
@@ -70,11 +73,29 @@ export class ChatService {
         },
       ]);
     }
-    return this.MessageModel.create({
-      conversationId: conversation.id,
-      messageType,
-      senderId,
-      content,
+
+    return this.sequelize.transaction(async (t) => {
+      const message = await this.MessageModel.create(
+        {
+          conversationId: conversation.id,
+          messageType,
+          senderId,
+          content,
+        },
+        { transaction: t },
+      );
+
+      await this.ConversationModel.update(
+        {
+          lastMessageAt: message.createdAt,
+        },
+        {
+          where: {
+            id: conversation.id,
+          },
+          transaction: t,
+        },
+      );
     });
   }
 
@@ -110,13 +131,56 @@ export class ChatService {
     return messages;
   }
 
-  async getConversations(userId: string, limit: number = 20, before?: string) {
+  async getConversations(userId: string, ConversationDto: GetConversationsDto) {
+    const { limit, cursor } = ConversationDto;
+    const where: any = {};
 
-      const where: any = {
-      userId,
-    };
-    const data = await this.ConversationModel.findAll({
-      where:
+    if (cursor) {
+      where.lastMessageAt = {
+        [Op.lt]: cursor,
+      };
+    }
+    const conversations = await this.ConversationModel.findAll({
+      where,
+
+      include: [
+        {
+          model: ConversationParticipant,
+          where: { userId },
+          attributes: [],
+        },
+      ],
+
+      order: [['lastMessageAt', 'DESC']],
+
+      limit,
+    });
+
+    return conversations;
+  }
+
+  async createConversation(
+    userId: string,
+    title: string,
+    participantsIds: string[],
+  ) {
+    return this.sequelize.transaction(async (t) => {
+      const uniqueParticipants = [...new Set([userId, ...participantsIds])];
+      const conversation = await this.ConversationModel.create(
+        {
+          createdBy: userId,
+          title,
+          type: 'group',
+        },
+        { transaction: t },
+      );
+      const participants = uniqueParticipants.map((userId) => ({
+        conversationId: conversation.id,
+        userId,
+      }));
+      await this.ConversationParticipantModel.bulkCreate(participants);
+
+      return conversation;
     });
   }
 }

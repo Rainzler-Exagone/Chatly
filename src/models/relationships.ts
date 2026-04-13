@@ -10,6 +10,7 @@ export function setupAssociations() {
 
   User.hasMany(ConversationParticipant, {
     foreignKey: 'userId',
+    as: 'participants',
   });
 
   User.hasMany(Message, {

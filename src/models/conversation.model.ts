@@ -7,11 +7,13 @@ import {
   Table,
 } from 'sequelize-typescript';
 import { User } from './users.model';
+import { Optional } from '@nestjs/common';
 
 interface ConversationCreationAttributes {
   title?: string;
   type: string;
   createdBy: string;
+  lastMessageAt?: Date;
 }
 
 @Table({ tableName: 'conversations' })
@@ -56,4 +58,11 @@ export class Conversation extends Model<
     unique: true,
   })
   declare directKey: string;
+
+  @Optional()
+  @Column({
+    type: DataType.DATE,
+    allowNull: true,
+  })
+  declare lastMessageAt: Date;
 }

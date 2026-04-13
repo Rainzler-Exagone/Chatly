@@ -22,12 +22,12 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.removeIndex(
-      'Conversations',
+      'conversations',
       'idx_conversations_last_message_at'
     );
 
     await queryInterface.removeColumn(
-      'Conversations',
+      'conversations',
       'lastMessageAt'
     );
   },
