@@ -14,6 +14,12 @@ export class DatabaseTestService implements OnModuleInit {
       this.logger.log(
         '✅ Connection to PostgreSQL has been established successfully.',
       );
+
+      console.log('DB CONFIG:', {
+        host: process.env.DB_HOST,
+        port: process.env.DB_PORT,
+        database: process.env.DB_NAME,
+      });
     } catch (error) {
       this.logger.error('❌ Unable to connect to the database:', error);
     }

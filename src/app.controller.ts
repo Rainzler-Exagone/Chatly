@@ -5,7 +5,10 @@ import { AuthGuard } from './guards/auth.guard';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
-
+  @Get()
+  test() {
+    return { message: 'success' };
+  }
   @UseGuards(AuthGuard)
   @Get()
   ProtectedRoute(@Req() req) {

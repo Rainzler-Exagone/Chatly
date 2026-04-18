@@ -1,15 +1,18 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import {
-  conversationDto,
-  GetConversationsDto,
-} from 'src/Dtos/conversation.dto';
+import { GetConversationsDto } from 'src/Dtos/conversation.dto';
 import { ConversationParticipant } from 'src/models/conversation-participant.model';
 import { Conversation } from 'src/models/conversation.model';
 import { Message } from 'src/models/message.model';
 import { User } from 'src/models/users.model';
+import { buildLastMessagePreview } from 'src/utils/message-preview.util';
+
+export interface ConversationParticipantCreation {
+  conversationId: string;
+  userId: string;
+}
 
 @Injectable()
 export class ChatService {
@@ -36,25 +39,27 @@ export class ChatService {
   async sendMessage(
     senderId: string,
     receiverId: string,
-    content: string,
     messageType: string,
+    ciphertext?: string,
+    iv?: string,
+    objectKey?: string,
+    authTage?: string,
   ) {
-    let conversation;
-
+    let conversation: Conversation | null;
+    // 1. Check for existing conversation
     conversation = await this.findConversationBetweenUsers(
       senderId,
       receiverId,
     );
-    const directKey = [senderId, receiverId].sort().join(':');
 
-    if (!conversation) {
+    // 2. If it doesn't exist, create it and ASSIGN it to our variable
+    if (!conversation?.id) {
+      const directKey = [senderId, receiverId].sort().join(':');
       const receiver = await this.UserModel.findByPk(receiverId, {
         attributes: ['id', 'name'],
       });
-      const title =
-        receiver?.name && receiver?.name
-          ? `${receiver.name} ${receiver.name}`
-          : receiver?.name || 'User';
+
+      const title = receiver?.name || 'User';
 
       conversation = await this.ConversationModel.create({
         directKey,
@@ -62,25 +67,24 @@ export class ChatService {
         title,
         createdBy: senderId,
       });
+
       await this.ConversationParticipantModel.bulkCreate([
-        {
-          conversationId: conversation.id,
-          userId: senderId,
-        },
-        {
-          conversationId: conversation.id,
-          userId: receiverId,
-        },
+        { conversationId: conversation.id, userId: senderId },
+        { conversationId: conversation.id, userId: receiverId },
       ]);
     }
 
+    // 3. Now 'conversation' is guaranteed to exist
     return this.sequelize.transaction(async (t) => {
       const message = await this.MessageModel.create(
         {
-          conversationId: conversation.id,
+          conversationId: conversation.id, // Now this won't be null
           messageType,
           senderId,
-          content,
+          ciphertext,
+          iv,
+          authTage,
+          objectKey,
         },
         { transaction: t },
       );
@@ -88,34 +92,38 @@ export class ChatService {
       await this.ConversationModel.update(
         {
           lastMessageAt: message.createdAt,
+          lastMessagePreview: buildLastMessagePreview({
+            messageType: message.messageType,
+            content: message.ciphertext,
+          }),
         },
         {
-          where: {
-            id: conversation.id,
-          },
+          where: { id: conversation.id },
           transaction: t,
         },
       );
+
+      return message; // Good practice to return the created message
     });
   }
 
   async getMessages(
-    senderId: string,
-    receiverId: string,
+    conversationId: string,
     limit: number = 30,
     before?: string,
   ) {
-    const conversation = await this.findConversationBetweenUsers(
-      senderId,
-      receiverId,
-    );
-    if (!conversation) {
-      return { message: '!conv', senderId, receiverId };
-    }
-    const conversationId = conversation.id;
-    const where: any = {
+    // const conversation = await this.findConversationBetweenUsers(
+    //   senderId,
+    //   receiverId,
+    // );
+    // if (!conversation) {
+    //   return { message: '!conv', senderId, receiverId };
+    // }
+    // const conversationId = conversation.id;
+    const where: WhereOptions<Message> = {
       conversationId,
     };
+
     if (before) {
       where.createdAt = {
         [Op.lt]: before,
@@ -123,7 +131,7 @@ export class ChatService {
     }
 
     const messages = await this.MessageModel.findAll({
-      where: { messageType: 'text' },
+      where,
       order: [['createdAt', 'DESC']],
       limit,
     });
@@ -133,27 +141,35 @@ export class ChatService {
 
   async getConversations(userId: string, ConversationDto: GetConversationsDto) {
     const { limit, cursor } = ConversationDto;
-    const where: any = {};
+    const where: WhereOptions<Conversation> = {};
 
     if (cursor) {
       where.lastMessageAt = {
         [Op.lt]: cursor,
       };
     }
-    const conversations = await this.ConversationModel.findAll({
-      where,
 
+    // const conversations = await this.ConversationModel.findAll({
+    //   where: { createdBy: userId },
+    // });
+    const conversations = await this.ConversationModel.findAll({
       include: [
         {
           model: ConversationParticipant,
-          where: { userId },
-          attributes: [],
+          where: {
+            userId,
+          },
+          attributes: ['id'],
+          required: true,
+          include: [{ model: User, attributes: ['id', 'name', 'avatar'] }],
         },
       ],
 
       order: [['lastMessageAt', 'DESC']],
 
       limit,
+
+      subQuery: false,
     });
 
     return conversations;

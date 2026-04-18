@@ -1,4 +1,4 @@
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 import {
   Column,
   DataType,
@@ -11,12 +11,16 @@ import { User } from './users.model';
 import { Conversation } from './conversation.model';
 
 interface MessageCreationAttributes {
-  content: string;
   messageType: string;
   senderId: string;
   conversationId: string;
+  ciphertext?: string;
+  iv?: string;
+  authTage?: string;
+  objectKey?: string;
+  createdAt?: string;
 }
-
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'file';
 @Table({
   tableName: 'messages',
   timestamps: true,
@@ -36,18 +40,43 @@ export class Message extends Model<Message, MessageCreationAttributes> {
 
   @IsString()
   @Column({
-    type: DataType.STRING,
+    type: DataType.ENUM('text', 'image', 'video', 'audio', 'file'),
     allowNull: false,
-    defaultValue: 'Text',
+    defaultValue: 'text',
   })
-  declare messageType: string;
+  declare messageType: MessageType;
 
+  @IsOptional()
   @IsString()
   @Column({
     type: DataType.TEXT,
-    allowNull: false,
+    allowNull: true,
   })
-  declare content: string;
+  declare ciphertext?: string;
+
+  @IsOptional()
+  @IsString()
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare iv: string | null;
+
+  @IsOptional()
+  @IsString()
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare authTag: string | null;
+
+  @IsOptional()
+  @IsString()
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare objectKey: string | null;
 
   @ForeignKey(() => User)
   @Column({
@@ -62,4 +91,10 @@ export class Message extends Model<Message, MessageCreationAttributes> {
     allowNull: false,
   })
   declare conversationId: string;
+  @Column({
+    type: DataType.DATE,
+    allowNull: false,
+    defaultValue: DataType.NOW,
+  })
+  declare createdAt: Date;
 }

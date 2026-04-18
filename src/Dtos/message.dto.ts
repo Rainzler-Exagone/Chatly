@@ -1,3 +1,4 @@
+import { Optional } from '@nestjs/common';
 import {
   IsUUID,
   IsString,
@@ -20,9 +21,17 @@ export class createMessageDto {
   @IsUUID()
   declare receiverId: string;
 
-  @IsString()
   @MaxLength(5000)
-  declare content: string;
+  declare cipheredText: string;
+
+  @MaxLength(5000)
+  declare iv: string;
+
+  @Optional()
+  declare authTage?: string;
+
+  @Optional()
+  declare objectKey?: string;
 
   @IsOptional()
   @IsEnum(MessageType)
@@ -31,7 +40,7 @@ export class createMessageDto {
 
 export class getMessageDto {
   @IsUUID()
-  declare receiverId: string;
+  declare conversationId: string;
 
   @IsOptional()
   @IsUUID()

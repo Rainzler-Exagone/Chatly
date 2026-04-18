@@ -14,6 +14,7 @@ interface ConversationCreationAttributes {
   type: string;
   createdBy: string;
   lastMessageAt?: Date;
+  lastMessagePreview?: Text;
 }
 
 @Table({ tableName: 'conversations' })
@@ -65,4 +66,11 @@ export class Conversation extends Model<
     allowNull: true,
   })
   declare lastMessageAt: Date;
+
+  @Optional()
+  @Column({
+    type: DataType.TEXT,
+    allowNull: true,
+  })
+  declare lastMessagePreview: string;
 }

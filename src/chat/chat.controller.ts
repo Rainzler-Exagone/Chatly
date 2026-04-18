@@ -1,8 +1,5 @@
 import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import {
-  conversationDto,
-  GetConversationsDto,
-} from 'src/Dtos/conversation.dto';
+import { GetConversationsDto } from 'src/Dtos/conversation.dto';
 import { createMessageDto, getMessageDto } from 'src/Dtos/message.dto';
 import { ChatService } from './chat.service';
 import { AuthGuard } from 'src/guards/auth.guard';
@@ -15,22 +12,24 @@ export class ChatController {
   @Post('message')
   newMessage(@Body() MessageData: createMessageDto, @Req() req) {
     const senderId: string = req.userId;
-    const { receiverId, content, messageType } = MessageData;
+    const { receiverId, cipheredText, iv, authTage, objectKey, messageType } =
+      MessageData;
     return this.chatService.sendMessage(
       senderId,
       receiverId,
-      content,
       messageType,
+      cipheredText,
+      iv,
+      objectKey,
+      authTage,
     );
   }
 
   @UseGuards(AuthGuard)
-  @Get('messages')
+  @Post('messages')
   getMessages(@Body() messageDto: getMessageDto, @Req() req) {
-    const { receiverId, limit, before } = messageDto;
-    const senderId = req.userId;
-    console.log(senderId);
-    return this.chatService.getMessages(senderId, receiverId, limit, before);
+    const { conversationId, limit, before } = messageDto;
+    return this.chatService.getMessages(conversationId, limit, before);
   }
 
   @UseGuards(AuthGuard)

@@ -19,7 +19,7 @@ export class AuthController {
     @Body() LoginData: any,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { refreshToken, accessToken } =
+    const { refreshToken, accessToken, user } =
       await this.authService.login(LoginData);
 
     res.cookie('refreshToken', refreshToken, {
@@ -28,7 +28,7 @@ export class AuthController {
       sameSite: 'strict',
     });
 
-    return { refreshToken, accessToken, message: 'success' };
+    return { refreshToken, accessToken, user, message: 'success' };
   }
 
   @Post('refresh')

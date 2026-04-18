@@ -15,12 +15,13 @@ export enum ParticipantRole {
 }
 interface ConversationParticipantCreationAttributes {
   role?: ParticipantRole;
-  userId: string;
   conversationId: string;
+  userId: string;
 }
 @Table({ tableName: 'conversation_participants' })
 export class ConversationParticipant extends Model<
-  ConversationParticipant | ConversationParticipantCreationAttributes
+  ConversationParticipant,
+  ConversationParticipantCreationAttributes
 > {
   @Column({
     type: DataType.STRING,

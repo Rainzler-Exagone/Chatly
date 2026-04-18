@@ -65,7 +65,17 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.generateUserTokens(user.id);
+    const tokens = await this.generateUserTokens(user.id);
+
+    return {
+      user: {
+        id: user.id,
+        name: user.name,
+        avatar: user.avatar ?? null,
+        email: user.email ?? null,
+      },
+      ...tokens,
+    };
   }
 
   async generateUserTokens(userId: any) {
@@ -76,7 +86,7 @@ export class AuthService {
     const refreshToken = uuidv4();
     await this.saveRefreshToken(userId, refreshToken);
 
-    return { accessToken, refreshToken, message: 'success' };
+    return { accessToken, refreshToken };
   }
 
   async saveRefreshToken(userId: number, refreshToken: string) {

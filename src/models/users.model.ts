@@ -46,6 +46,11 @@ export class User extends Model<User, UserCreationAttributes> {
     allowNull: false,
   })
   declare password: string;
+  @Column({
+    type: DataType.STRING,
+    allowNull: true,
+  })
+  declare avatar: string;
 
   @CreatedAt
   declare createdAt: Date;

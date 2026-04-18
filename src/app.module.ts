@@ -17,6 +17,7 @@ import { ConversationParticipant } from './models/conversation-participant.model
 import { MessageRead } from './models/message-read.model';
 import { RefreshToken } from './models/refresh-token.model';
 import { ChatModule } from './chat/chat.module';
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -59,6 +60,7 @@ import { ChatModule } from './chat/chat.module';
         // synchronize: true, // Note: Set to false in production
       }),
     }),
+    MinioModule,
     ChatModule,
   ],
   controllers: [AppController],
