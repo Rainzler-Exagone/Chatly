@@ -149,30 +149,29 @@ export class ChatService {
       };
     }
 
-    // const conversations = await this.ConversationModel.findAll({
-    //   where: { createdBy: userId },
-    // });
-    const conversations = await this.ConversationModel.findAll({
+    return await Conversation.findAll({
       include: [
         {
           model: ConversationParticipant,
+          as: 'participants',
+          where: { userId },
+          attributes: [], // We don't need the current user's data back
+        },
+        {
+          model: ConversationParticipant,
+          as: 'otherParticipants', // Use an alias for clarity
           where: {
-            userId,
+            userId: { [Op.ne]: userId }, // Find the person NOT me
           },
-          attributes: ['id'],
-          required: true,
-          include: [{ model: User, attributes: ['id', 'name', 'avatar'] }],
+          include: [
+            {
+              model: User,
+              attributes: ['id', 'name', 'avatar'],
+            },
+          ],
         },
       ],
-
-      order: [['lastMessageAt', 'DESC']],
-
-      limit,
-
-      subQuery: false,
     });
-
-    return conversations;
   }
 
   async createConversation(

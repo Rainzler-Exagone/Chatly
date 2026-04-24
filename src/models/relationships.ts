@@ -52,6 +52,11 @@ export function setupAssociations() {
   });
 
   Conversation.hasMany(ConversationParticipant, {
+    as: 'participants',
+    foreignKey: 'conversationId',
+  });
+  Conversation.hasMany(ConversationParticipant, {
+    as: 'otherParticipants',
     foreignKey: 'conversationId',
   });
 
